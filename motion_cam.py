@@ -1,17 +1,17 @@
-# モジュールのインポート
 # -*- coding: utf-8 -*-
+# モジュールのインポート
 import RPi.GPIO as GPIO
 import time
 import wiringpi as pi
 import picamera
 
-delay = ___     # 休止時間を0.2秒に設定
-END = ___        # 終了時間を10秒に設定
+delay = ___      # 人感センサ読み取りの間隔を0.2秒に設定
+END = ___        # カウント終了までの時間を1秒に設定
 sensor_pin = ___ # 人感センサをGPIO18に接続
 
-# カメラを使用する設定
+# カメラモジュールの呼び出し
 camera = picamera.PiCamera()
-# 画像サイズを400 x 400に
+# 撮影の画面サイズを 400 x 400 に設定
 camera.resolution = (___, ___)
 
 # 初期設定
@@ -22,54 +22,51 @@ def sensor_init():
 
 # 動作設定
 def main():
+    # 初期設定の呼び出し
     sensor_init()
-    # 動画の保存ファイル名の初期化
-    video_count = __
-    # センサ検知のカウント回数の初期化
-    count = __
-    # 開始時間の代入
+    # 動画の保存ファイル用変数の初期化
+    video_count = ___
+    # 人感センサ検知のカウント用変数の初期化
+    count = ___
+    # 開始時間 start を設定
     start = time.time()
+    print('start counting')
     # 無限ループ
     while True:
-        print('start recording')
-        time.sleep(1)
-        # 動画の保存ファイル名の設定
-        video_file = '{:03d}.h264'.format(video_count)
-        # 録画開始
-        camera.start_recording(video_file)
-        # ファイル名の変更
-        video_count = video_count + 1
-
         # センサが感知したとき
         if( pi.digitalRead( sensor_pin ) == pi.HIGH ):
-            # count を +1 する
-            count = ____________
+            # count 自身を +1 する
+            count = __________
             time.sleep(delay)
             print(count)
-        # センサが感知しなかったとき
+        # センサが感知しないとき
         elif( pi.digitalRead( sensor_pin ) == pi.LOW ):
-            # 何もせずdelay秒待つ
+            # delay秒だけ待つ
             time.sleep(delay)
 
-        # 指定時間終了後
-        # 「現在時間(time.time()) - 開始時間」
-        # が END 秒以上経過していたら
+        # カウント終了
         if int(time.time() - start) >= END:
-            # 録画の停止
-            camera.stop_recording()
-            time.sleep(1)
-            # センサの検知が検知回数の半分未満だったら
-            # （人がいないと判断したら）
-            if count < (END * (1 / delay) / 2):
-                # 録画したファイルを削除する
-                os.remove(video_file)
-            # センサ検知のカウント回数の初期化
-            count = ____
+            # センサの検知回数が全体のうち半分より多かったとき
+            if count > int(END * (1 / delay) / 2):
+                # 動画の保存ファイル名の設定
+                video_file = '{:03d}.h264'.format(video_count)
+                # 録画開始
+                camera.start_preview()
+                camera.start_recording(video_file)
+                time.sleep(5)
+                # 録画終了
+                camera.stop_preview()
+                camera.stop_recording()
+                time.sleep(1)
+                # 動画の保存ファイル名の変更
+                video_count = video_count + 1
+            # 人感センサ検知回数の初期化
+            count = ___
+            # 開始時間をリセット
             start = time.time()
-
+            print('start counting')
 
 if __name__ == '__main__':
-
     try:  # 通常時
         main()
     except KeyboardInterrupt:  # キーボードが押されたとき

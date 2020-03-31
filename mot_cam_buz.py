@@ -1,14 +1,14 @@
-# モジュールのインポート
 # -*- coding: utf-8 -*-
+# モジュールのインポート
 import RPi.GPIO as GPIO
 import time
 import wiringpi as pi
 import picamera
 
 delay = 0.2     # 休止時間を0.2秒に設定
-END = 10        # 終了時間を10秒に設定
+END = 1        # 終了時間を10秒に設定
 sensor_pin = 18 # 人感センサをGPIO18に接続
-buzzer_pin = 4  # ブザーのPINをGPIO4に接続
+buzzerpin = 4  # ブザーのPINをGPIO4に接続
 
 # カメラを使用する設定
 camera = picamera.PiCamera()
@@ -20,7 +20,7 @@ def sensor_init():
     GPIO.setmode(GPIO.BCM)
     pi.wiringPiSetupGpio()
     pi.pinMode(sensor_pin, pi.INPUT)
-    GPIO.setup(BuzzerPin, GPIO.OUT, initial=GPIO.HIGH)  # ブザーの初期設定
+    GPIO.setup(buzzerpin, GPIO.OUT, initial=GPIO.HIGH)  # ブザーの初期設定
 
 # 動作設定
 def main():
@@ -31,20 +31,9 @@ def main():
     count = 0
     # 開始時間の代入
     start = time.time()
+    print('start counting')
     # 無限ループ
     while True:
-        print('start recording')
-        # ブザーをONにする
-        GPIO.output(BuzzerPin, GPIO.LOW)
-        time.sleep(1)
-        # ブザーをOFFにする
-        GPIO.output(BuzzerPin, GPIO.HIGH)
-        # 録画の設定
-        # camera.start_preview()
-        video_file = '{:03d}.h264'.format(video_count)
-        video_count = video_count + 1
-        camera.start_recording(video_file)
-
         # センサが感知したとき
         if( pi.digitalRead( sensor_pin ) == pi.HIGH ):
             # count を +1 する
@@ -59,19 +48,30 @@ def main():
         # 指定時間終了後
         # 「現在時間(time.time()) - 開始時間」が END 秒以上経過していたら
         if int(time.time() - start) >= END:
-            # 録画の停止
-            camera.stop_recording()
-            time.sleep(1)
             # センサの検知が検知回数の半分未満だったら
-            if count < (END * (1 / delay) / 2):
-                os.remove(video_file)
+            if count > int(END * (1 / delay) / 2):
+                # ブザー
+                GPIO.output(buzzerpin, GPIO.LOW)
+                time.sleep(0.5)
+                GPIO.output(buzzerpin, GPIO.HIGH)
+                # camera.start_preview()
+                video_file = '{:03d}.h264'.format(video_count)
+                video_count = video_count + 1
+                camera.start_preview()
+                camera.start_recording(video_file)
+                time.sleep(5)
+                # 録画の停止
+                camera.stop_preview()
+                camera.stop_recording()
+                time.sleep(1)
             count = 0
             start = time.time()
+            print('start counting')
 
 # KeyboardInterrupt時の設定
 def destroy():
     # ブザーをOFFにする
-    GPIO.output(BuzzerPin, GPIO.HIGH)
+    GPIO.output(buzzerpin, GPIO.HIGH)
     # GPIOのリソースを開放する
     GPIO.cleanup()
 
