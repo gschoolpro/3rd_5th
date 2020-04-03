@@ -6,9 +6,9 @@ import wiringpi as pi
 import picamera
 
 delay = 0.2     # 休止時間を0.2秒に設定
-END = 1        # 終了時間を10秒に設定
+END = 1         # 終了時間を10秒に設定
 sensor_pin = 18 # 人感センサをGPIO18に接続
-buzzerpin = 4  # ブザーのPINをGPIO4に接続
+buzzerpin = 4   # ブザーのPINをGPIO4に接続
 
 # カメラを使用する設定
 camera = picamera.PiCamera()
@@ -54,17 +54,21 @@ def main():
                 GPIO.output(buzzerpin, GPIO.LOW)
                 time.sleep(0.5)
                 GPIO.output(buzzerpin, GPIO.HIGH)
-                # camera.start_preview()
+                # 動画の保存ファイル名の設定
                 video_file = '{:03d}.h264'.format(video_count)
-                video_count = video_count + 1
+                # 録画開始
                 camera.start_preview()
                 camera.start_recording(video_file)
                 time.sleep(5)
-                # 録画の停止
+                # 録画終了
                 camera.stop_preview()
                 camera.stop_recording()
                 time.sleep(1)
+                # 動画の保存ファイルの変更
+                video_count = video_count + 1
+            # 人感センサの検知回数の初期化
             count = 0
+            # 開始時間をリセット
             start = time.time()
             print('start counting')
 
@@ -75,11 +79,10 @@ def destroy():
     # GPIOのリソースを開放する
     GPIO.cleanup()
 
-
 if __name__ == '__main__':
     try:  # 通常時
         main()
     except KeyboardInterrupt:  # キーボードが押されたとき
         destroy()
-    finally:
+    finally: # 終了時(ctrl+cなど)
         pass
